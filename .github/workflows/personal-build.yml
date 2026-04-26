@@ -1,0 +1,65 @@
+name: Build and Upload Personal Package
+
+on:
+  push:
+    branches: [main, personel]
+    paths:
+      - "recipe/**"
+  workflow_dispatch:
+
+jobs:
+  build-and-upload:
+    # 1. Use the matrix variable to dynamically set the runner OS
+    runs-on: ${{ matrix.os }}
+
+    # 2. Define the matrix
+    strategy:
+      fail-fast: false # If one OS fails, let the other continue building
+      matrix:
+        include:
+          - os: ubuntu-latest
+            config_prefix: linux_64_
+          - os: ubuntu-24.04-arm
+            config_prefix: linux_aarch64_
+          - os: macos-latest
+            config_prefix: osx_arm64_
+
+    defaults:
+      run:
+        shell: bash -el {0}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Miniforge (Conda)
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          miniforge-version: latest
+          activate-environment: build_env
+          conda-remove-defaults: true
+
+      - name: Install build dependencies
+        run: |
+          # No need conda-forge-pinning here, as we will use .ci_support/
+          conda install conda-build anaconda-client conda-libmamba-solver -c conda-forge -y
+          conda config --set solver libmamba
+
+      - name: Build and Upload
+        env:
+          ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
+        run: |
+          # 1. Loop through every configuration file for this specific OS
+          for config_file in .ci_support/${{ matrix.config_prefix }}*.yaml; do
+            echo "=========================================================="
+            echo "Building with config: $config_file"
+            echo "=========================================================="
+            
+            # Build the package using the explicit feedstock matrix config
+            conda build recipe/ -c https://conda.anaconda.org/rxue -c conda-forge -m "$config_file"
+            
+            # Identify the output file path and upload it immediately
+            PKG_FILE=$(conda build recipe/ -c https://conda.anaconda.org/rxue -c conda-forge -m "$config_file" --output)
+            anaconda -t $ANACONDA_TOKEN upload -u rxue "$PKG_FILE" --force
+          done
+          
