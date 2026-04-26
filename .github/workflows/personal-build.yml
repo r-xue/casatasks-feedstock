@@ -9,20 +9,7 @@ on:
 
 jobs:
   build-and-upload:
-    # 1. Use the matrix variable to dynamically set the runner OS
-    runs-on: ${{ matrix.os }}
-
-    # 2. Define the matrix
-    strategy:
-      fail-fast: false # If one OS fails, let the other continue building
-      matrix:
-        include:
-          - os: ubuntu-latest
-            config_prefix: linux_64_
-          - os: ubuntu-24.04-arm
-            config_prefix: linux_aarch64_
-          - os: macos-latest
-            config_prefix: osx_arm64_
+    runs-on: ubuntu-latest
 
     defaults:
       run:
@@ -49,8 +36,8 @@ jobs:
         env:
           ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
         run: |
-          # 1. Loop through every configuration file for this specific OS
-          for config_file in .ci_support/${{ matrix.config_prefix }}*.yaml; do
+          # 1. Loop through every configuration file
+          for config_file in .ci_support/*.yaml; do
             echo "=========================================================="
             echo "Building with config: $config_file"
             echo "=========================================================="
