@@ -1,4 +1,4 @@
-{% set version = "6.7.2.42" %}
+{% set version = "6.7.3.21" %}
 
 package:
   name: casatasks
@@ -7,9 +7,10 @@ package:
 source:
   fn: casa-{{ version }}.tar.gz
   url: https://open-bitbucket.nrao.edu/rest/api/latest/projects/CASA/repos/casa6/archive?at=refs%2Ftags%2F{{ version }}&format=tgz
-  sha256: 5bcdfc745878fe1bb2ba57c6f6ecc587fb5a6da4371faeaa8b396560778590dc
+  sha256: 1ec170df2098d26c0c58406e23ce8c4fe8aca7eb2c6cd199455ba6d97f068a5d
   patches:
     - versioning.patch
+    - cas-14761.patch
 
 build:
   number: 0
